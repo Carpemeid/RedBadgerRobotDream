@@ -11,4 +11,5 @@ import Foundation
 struct Position {
     let x: UInt
     let y: UInt
+    let orientation: Orientation
 }
