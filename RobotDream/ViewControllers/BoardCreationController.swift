@@ -44,19 +44,19 @@ class BoardCreationController: UIViewController {
     
     @IBOutlet private weak var createButton: UIButton!
     
-    @IBAction func didChangeTextForX(_ sender: Any) {
+    @IBAction private func didChangeTextForX(_ sender: Any) {
         refreshState()
     }
     
-    @IBAction func didChangeTextForY(_ sender: Any) {
+    @IBAction private func didChangeTextForY(_ sender: Any) {
         refreshState()
     }
     
-    @IBAction func createAction(_ sender: Any) {
+    @IBAction private func createAction(_ sender: Any) {
         guard let xValue = numericValueResult(from: xTextField).value,
             let yValue = numericValueResult(from: yTextField).value else {
                 errorLabel.isHidden = false
-                errorLabel.text = "Oops, something went wrong. Please correct your input before attempting again"
+                errorLabel.text = "Oops, something went wrong. Please correct your input and try again"
                 
                 return
         }
@@ -80,6 +80,8 @@ class BoardCreationController: UIViewController {
               yResult.value != nil else {
                 createButton.isHidden = true
                 
+                // try to only highlight the error of the focused field
+                // more intuitive for the user
                 if let xError = xResult.error,
                     xTextField.isFirstResponder {
                     showLabel(with: xError)

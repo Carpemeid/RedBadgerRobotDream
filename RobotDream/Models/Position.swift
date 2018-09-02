@@ -8,8 +8,12 @@
 
 import Foundation
 
-struct Position {
+struct Position: CustomStringConvertible {
     let x: UInt
     let y: UInt
     let orientation: Orientation
+    
+    var description: String {
+        return "\(x) \(y) \(orientation.rawValue)"
+    }
 }

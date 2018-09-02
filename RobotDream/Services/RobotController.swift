@@ -10,15 +10,16 @@ import Foundation
 
 enum RobotControllerError: Error {
     case SOS(position: Position)
+    case invalidStartingPosition
 }
 
 protocol RobotController {
-    func position(for startingPosition: Position, moves: [Move]) throws -> Position?
+    func position(for startingPosition: Position, moves: [Move]) throws -> Position
 }
 
 final class RobotControllerImpl {
     private let positionCalculator: PositionCalculator
-    private var scentPositionMoves: [(Position, Move)] = []
+    private var scentPositions: [Position] = []
     
     init(positionCalculator: PositionCalculator) {
         self.positionCalculator = positionCalculator
@@ -26,41 +27,45 @@ final class RobotControllerImpl {
 }
 
 extension RobotControllerImpl: RobotController {
-    func position(for startingPosition: Position, moves: [Move]) throws -> Position? {
+    func position(for startingPosition: Position, moves: [Move]) throws -> Position {
+        guard positionCalculator.isValid(position: startingPosition) else {
+            throw RobotControllerError.invalidStartingPosition
+        }
+        
         guard !moves.isEmpty else {
             return startingPosition
         }
         
         let finalPosition: Position = try moves.reduce(startingPosition) { position, move in
-            guard hasScent(for: move, at: position) else {
-                return position
-            }
-            
-            guard let nextPosition = positionCalculator.nextPosition(from: position, move: move) else {
-                addScent(move: move, at: position)
+            do {
+                return try positionCalculator.nextPosition(from: position, move: move)
+            } catch RobotPositionError.outsideBoard(let outsideBoardPosition) {
+                guard !hasScent(for: outsideBoardPosition) else {
+                    return position
+                }
+                
+                addScent(at: outsideBoardPosition)
+                
+                throw RobotControllerError.SOS(position: position)
+            } catch {
                 throw RobotControllerError.SOS(position: position)
             }
-            
-            return nextPosition
         }
         
         return finalPosition
     }
     
-    private func hasScent(for move: Move, at position: Position) -> Bool {
-        return scentPositionMoves.contains { (localPosition, localMove) in
-            let samePosition = localPosition.x == position.x && localPosition.y == position.y && localPosition.orientation == position.orientation
-            let sameMove = localMove == move
-            
-            return samePosition && sameMove
+    private func hasScent(for position: Position) -> Bool {
+        return scentPositions.contains { localPosition in
+            return localPosition.x == position.x && localPosition.y == position.y
         }
     }
     
-    private func addScent(move: Move, at position: Position) {
-        guard hasScent(for: move, at: position) else {
+    private func addScent(at position: Position) {
+        guard !hasScent(for: position) else {
             return
         }
         
-        scentPositionMoves.append((position, move))
+        scentPositions.append(position)
     }
 }

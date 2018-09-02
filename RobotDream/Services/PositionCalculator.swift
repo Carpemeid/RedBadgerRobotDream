@@ -8,8 +8,12 @@
 
 import Foundation
 
+enum RobotPositionError: Error {
+    case outsideBoard(position: Position)
+}
+
 protocol PositionCalculator {
-    func nextPosition(from position: Position, move: Move) -> Position?
+    func nextPosition(from position: Position, move: Move) throws -> Position
     func isValid(position: Position) -> Bool
 }
 
@@ -20,7 +24,10 @@ final class PositionCalculatorImpl: PositionCalculator {
         self.board = board
     }
     
-    func nextPosition(from position: Position, move: Move) -> Position? {
+    func nextPosition(from position: Position, move: Move) throws -> Position {
+        debugPrint("current position \(position)")
+        debugPrint("move to make \(move.rawValue)")
+        
         let newPosition: Position
         
         switch move {
@@ -33,8 +40,11 @@ final class PositionCalculatorImpl: PositionCalculator {
         }
         
         guard isValid(position: newPosition) else {
-            return nil
+            debugPrint("the new position \(newPosition) is invalid")
+            throw RobotPositionError.outsideBoard(position: newPosition)
         }
+        
+        debugPrint("next position \(newPosition)")
         
         return newPosition
     }
